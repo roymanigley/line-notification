@@ -1,12 +1,17 @@
 import json
+import os
 from urllib.error import HTTPError
 
 from flask import Flask, request, Response
+from flask_basicauth import BasicAuth
 from waitress import serve
 
 from line.LineClient import LineClient
 
 __app__ = Flask(__name__)
+__app__.config["BASIC_AUTH_USERNAME"] = os.environ.get("API_USERNAME") or "admin"
+__app__.config["BASIC_AUTH_PASSWORD"] = os.environ.get("API_PASSWORD") or "1234"
+__basic_auth__ = BasicAuth(__app__)
 __line_client__ = LineClient()
 
 
@@ -14,7 +19,7 @@ __line_client__ = LineClient()
 def root():
     return create_response({
         "application": "line-notification",
-        "available resources": [
+        "availableResources": [
                 {
                     "method": "GET",
                     "route": "/api/send_message",
@@ -27,6 +32,7 @@ def root():
 
 
 @__app__.route('/api/send_message')
+@__basic_auth__.required
 def __send_message__():
     message = request.args.get('message')
     print("[+] sending broadcast message: {}", message)
@@ -46,6 +52,11 @@ def __send_message__():
 @__app__.errorhandler(404)
 def page_not_found(e):
     return create_response({"status": "error", "message": "resource not found"}, 404)
+
+
+@__app__.errorhandler(401)
+def page_not_found(e):
+    return create_response({"status": "error", "message": "not authorized"}, 401)
 
 
 def create_response(message: dict, status=200, mimetype="application/json"):

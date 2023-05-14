@@ -9,7 +9,7 @@ __API_TOKEN__ = os.environ.get("LINE_API_TOKEN")
 class LineClient(object):
 
     def __init__(self):
-        if __API_TOKEN__ == None:
+        if __API_TOKEN__ is None:
             raise Exception("missing ENV VARIABLE: LINE_API_TOKEN")
         self.token = __API_TOKEN__
 
